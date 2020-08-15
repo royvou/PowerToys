@@ -8,6 +8,7 @@ insert_final_newline = true
 
 [*.cs]
 indent_size = 4
+newline = clrf
 dotnet_sort_system_directives_first = true
 
 # Don't use this. qualifier
