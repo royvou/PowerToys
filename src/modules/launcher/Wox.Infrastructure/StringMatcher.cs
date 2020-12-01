@@ -189,9 +189,24 @@ namespace Wox.Infrastructure
             }
             else
             {
-                int? ind = spaceIndices.OrderBy(item => (firstMatchIndex - item)).Where(item => firstMatchIndex > item).FirstOrDefault();
-                int closestSpaceIndex = ind ?? -1;
-                return closestSpaceIndex;
+                // The logic does the following LINQ query without allocations
+                // spaceIndices.OrderBy(item => (firstMatchIndex - item)).Where(item => firstMatchIndex > item).FirstOrDefault();
+                var highestOrderIndex = int.MaxValue;
+                var highestResult = -1;
+                for (int i = 0; i < spaceIndices.Count; i++)
+                {
+                    var spaceIndex = spaceIndices[i];
+
+                    var orderIndex = firstMatchIndex - spaceIndex;
+
+                    if (orderIndex < highestOrderIndex && firstMatchIndex > spaceIndex)
+                    {
+                        highestOrderIndex = orderIndex;
+                        highestResult = spaceIndex;
+                    }
+                }
+
+                return highestResult;
             }
         }
 
