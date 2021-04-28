@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Interop;
 using ManagedCommon;
-using Microsoft.PowerToys.Run.Plugin.System.Win32;
+using Microsoft.Windows.Sdk;
 using Wox.Infrastructure;
 using Wox.Plugin;
 
@@ -95,7 +95,7 @@ namespace Microsoft.PowerToys.Run.Plugin.System
                     IcoPath = $"Images\\logoff.{IconTheme}.png",
                     Action = c =>
                     {
-                        NativeMethods.ExitWindowsEx(EWXLOGOFF, 0);
+                        PInvoke.ExitWindowsEx(EWXLOGOFF, 0);
                         return true;
                     },
                 },
@@ -106,7 +106,7 @@ namespace Microsoft.PowerToys.Run.Plugin.System
                     IcoPath = $"Images\\lock.{IconTheme}.png",
                     Action = c =>
                     {
-                        NativeMethods.LockWorkStation();
+                        PInvoke.LockWorkStation();
                         return true;
                     },
                 },
@@ -117,7 +117,7 @@ namespace Microsoft.PowerToys.Run.Plugin.System
                     IcoPath = $"Images\\sleep.{IconTheme}.png",
                     Action = c =>
                     {
-                        NativeMethods.SetSuspendState(false, true, true);
+                        PInvoke.SetSuspendState(false, true, true);
                         return true;
                     },
                 },
@@ -128,7 +128,7 @@ namespace Microsoft.PowerToys.Run.Plugin.System
                     IcoPath = $"Images\\sleep.{IconTheme}.png", // Icon change needed
                     Action = c =>
                     {
-                        NativeMethods.SetSuspendState(true, true, true);
+                        PInvoke.SetSuspendState(true, true, true);
                         return true;
                     },
                 },
@@ -142,8 +142,8 @@ namespace Microsoft.PowerToys.Run.Plugin.System
                         // http://www.pinvoke.net/default.aspx/shell32/SHEmptyRecycleBin.html
                         // FYI, couldn't find documentation for this but if the recycle bin is already empty, it will return -2147418113 (0x8000FFFF (E_UNEXPECTED))
                         // 0 for nothing
-                        var result = NativeMethods.SHEmptyRecycleBin(new WindowInteropHelper(Application.Current.MainWindow).Handle, 0);
-                        if (result != (uint)NativeMethods.HRESULT.S_OK && result != 0x8000FFFF)
+                        var result = PInvoke.SHEmptyRecycleBin(new WindowInteropHelper(Application.Current.MainWindow).Handle, 0);
+                        if (result != (uint)PInvoke.HRESULT.S_OK && result != 0x8000FFFF)
                         {
                             var name = "Plugin: " + Properties.Resources.Microsoft_plugin_sys_plugin_name;
                             var message = $"Error emptying recycle bin, error code: {result}\n" +

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -88,14 +88,14 @@ namespace Wox.Infrastructure.Image
             finally
             {
                 // delete HBitmap to avoid memory leaks
-                NativeMethods.DeleteObject(hBitmap);
+                PInvoke.DeleteObject(hBitmap);
             }
         }
 
         private static IntPtr GetHBitmap(string fileName, int width, int height, ThumbnailOptions options)
         {
             Guid shellItem2Guid = new Guid(IShellItem2Guid);
-            int retCode = NativeMethods.SHCreateItemFromParsingName(fileName, IntPtr.Zero, ref shellItem2Guid, out IShellItem nativeShellItem);
+            int retCode = PInvoke.SHCreateItemFromParsingName(fileName, IntPtr.Zero, ref shellItem2Guid, out IShellItem nativeShellItem);
 
             if (retCode != 0)
             {

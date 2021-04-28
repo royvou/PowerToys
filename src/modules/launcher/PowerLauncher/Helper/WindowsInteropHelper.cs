@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -29,7 +29,7 @@ namespace PowerLauncher.Helper
         {
             get
             {
-                return _hwnd_shell != IntPtr.Zero ? _hwnd_shell : _hwnd_shell = NativeMethods.GetShellWindow();
+                return _hwnd_shell != IntPtr.Zero ? _hwnd_shell : _hwnd_shell = PInvoke.GetShellWindow();
             }
         }
 
@@ -37,7 +37,7 @@ namespace PowerLauncher.Helper
         {
             get
             {
-                return _hwnd_desktop != IntPtr.Zero ? _hwnd_desktop : _hwnd_desktop = NativeMethods.GetDesktopWindow();
+                return _hwnd_desktop != IntPtr.Zero ? _hwnd_desktop : _hwnd_desktop = PInvoke.GetDesktopWindow();
             }
         }
 
@@ -112,7 +112,7 @@ namespace PowerLauncher.Helper
         public static bool IsWindowFullscreen()
         {
             // get current active window
-            IntPtr hWnd = NativeMethods.GetForegroundWindow();
+            IntPtr hWnd = PInvoke.GetForegroundWindow();
 
             if (hWnd != null && !hWnd.Equals(IntPtr.Zero))
             {
@@ -120,7 +120,7 @@ namespace PowerLauncher.Helper
                 if (!(hWnd.Equals(HWND_DESKTOP) || hWnd.Equals(HWND_SHELL)))
                 {
                     StringBuilder sb = new StringBuilder(256);
-                    _ = NativeMethods.GetClassName(hWnd, sb, sb.Capacity);
+                    _ = PInvoke.GetClassName(hWnd, sb, sb.Capacity);
                     string windowClass = sb.ToString();
 
                     // for Win+Tab (Flip3D)
@@ -129,7 +129,7 @@ namespace PowerLauncher.Helper
                         return false;
                     }
 
-                    _ = NativeMethods.GetWindowRect(hWnd, out RECT appBounds);
+                    _ = PInvoke.GetWindowRect(hWnd, out RECT appBounds);
 
                     // for console (ConsoleWindowClass), we have to check for negative dimensions
                     if (windowClass == WindowClassConsole)
@@ -140,8 +140,8 @@ namespace PowerLauncher.Helper
                     // for desktop (Progman or WorkerW, depends on the system), we have to check
                     if (windowClass == WindowClassProgman || windowClass == WindowClassWorkerW)
                     {
-                        IntPtr hWndDesktop = NativeMethods.FindWindowEx(hWnd, IntPtr.Zero, "SHELLDLL_DefView", null);
-                        hWndDesktop = NativeMethods.FindWindowEx(hWndDesktop, IntPtr.Zero, "SysListView32", "FolderView");
+                        IntPtr hWndDesktop = PInvoke.FindWindowEx(hWnd, IntPtr.Zero, "SHELLDLL_DefView", null);
+                        hWndDesktop = PInvoke.FindWindowEx(hWndDesktop, IntPtr.Zero, "SysListView32", "FolderView");
                         if (hWndDesktop != null && !hWndDesktop.Equals(IntPtr.Zero))
                         {
                             return false;
@@ -166,7 +166,7 @@ namespace PowerLauncher.Helper
         public static void DisableControlBox(Window win)
         {
             var hwnd = new WindowInteropHelper(win).Handle;
-            _ = NativeMethods.SetWindowLong(hwnd, GWL_STYLE, NativeMethods.GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
+            _ = PInvoke.SetWindowLong(hwnd, GWL_STYLE, PInvoke.GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
         }
 
         /// <summary>

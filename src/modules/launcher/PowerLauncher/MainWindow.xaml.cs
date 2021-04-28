@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -90,7 +90,7 @@ namespace PowerLauncher
             WindowsInteropHelper.INPUT[] inputs = new WindowsInteropHelper.INPUT[] { input };
 
             // Send empty mouse event. This makes this thread the last to send input, and hence allows it to pass foreground permission checks
-            _ = NativeMethods.SendInput(1, inputs, WindowsInteropHelper.INPUT.Size);
+            _ = PInvoke.SendInput(1, inputs, WindowsInteropHelper.INPUT.Size);
             Activate();
         }
 
@@ -242,7 +242,7 @@ namespace PowerLauncher
                 case ManagedCommon.StartupPosition.PrimaryMonitor:
                     return Screen.PrimaryScreen;
                 case ManagedCommon.StartupPosition.Focus:
-                    IntPtr foregroundWindowHandle = NativeMethods.GetForegroundWindow();
+                    IntPtr foregroundWindowHandle = PInvoke.GetForegroundWindow();
                     Screen activeScreen = Screen.FromHandle(foregroundWindowHandle);
                     return activeScreen;
                 case ManagedCommon.StartupPosition.Cursor:

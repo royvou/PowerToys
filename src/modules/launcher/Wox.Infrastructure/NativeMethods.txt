@@ -1,0 +1,5 @@
+SHCreateItemFromParsingName
+DeleteObject
+
+IShellItem
+IShellItemImageFactory

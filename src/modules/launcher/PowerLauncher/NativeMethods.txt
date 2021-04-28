@@ -1,0 +1,12 @@
+MessageHandler
+Shell32CommandLineToArgvW
+Kernel32LocalFree
+SendInput
+GetWindowLong
+SetWindowLong
+GetForegroundWindow
+GetDesktopWindow
+GetShellWindow
+GetWindowRect
+GetClassName
+FindWindowEx

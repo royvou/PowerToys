@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,78 +13,6 @@ using static PowerLauncher.Helper.WindowsInteropHelper;
 // modified to allow single instance restart
 namespace PowerLauncher.Helper
 {
-    [SuppressUnmanagedCodeSecurity]
-    internal static class NativeMethods
-    {
-        /// <summary>
-        /// Delegate declaration that matches WndProc signatures.
-        /// </summary>
-        public delegate IntPtr MessageHandler(WM uMsg, IntPtr wParam, IntPtr lParam, out bool handled);
-
-        [DllImport("shell32.dll", EntryPoint = "CommandLineToArgvW", CharSet = CharSet.Unicode)]
-        private static extern IntPtr Shell32CommandLineToArgvW([MarshalAs(UnmanagedType.LPWStr)] string cmdLine, out int numArgs);
-
-        [DllImport("kernel32.dll", EntryPoint = "LocalFree", SetLastError = true)]
-        internal static extern IntPtr Kernel32LocalFree(IntPtr hMem);
-
-        [DllImport("user32.dll")]
-        internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        internal static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll")]
-        internal static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-        [DllImport("user32.dll")]
-        internal static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        internal static extern IntPtr GetDesktopWindow();
-
-        [DllImport("user32.dll")]
-        internal static extern IntPtr GetShellWindow();
-
-        [DllImport("user32.dll", SetLastError = true)]
-        internal static extern int GetWindowRect(IntPtr hwnd, out RECT rc);
-
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-        [DllImport("user32.DLL", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
-
-        public static string[] CommandLineToArgvW(string cmdLine)
-        {
-            IntPtr argv = IntPtr.Zero;
-            try
-            {
-                argv = Shell32CommandLineToArgvW(cmdLine, out int numArgs);
-                if (argv == IntPtr.Zero)
-                {
-                    throw new Win32Exception();
-                }
-
-                var result = new string[numArgs];
-
-                for (int i = 0; i < numArgs; i++)
-                {
-                    IntPtr currArg = Marshal.ReadIntPtr(argv, i * Marshal.SizeOf(typeof(IntPtr)));
-                    result[i] = Marshal.PtrToStringUni(currArg);
-                }
-
-                return result;
-            }
-            finally
-            {
-                _ = Kernel32LocalFree(argv);
-
-                // Otherwise LocalFree failed.
-                // Assert.AreEqual(IntPtr.Zero, p);
-            }
-        }
-    }
-
     internal enum WM
     {
         NULL = 0x0000,

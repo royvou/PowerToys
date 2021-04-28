@@ -1,0 +1,4 @@
+ExitWindowsEx
+LockWorkStation
+SHEmptyRecycleBin
+SetSuspendState

@@ -1,0 +1,6 @@
+SHCreateStreamOnFileEx
+SHLoadIndirectString
+
+IAppxManifestProperties
+AppxFactory
+IAppxFactory

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using Microsoft.Windows.Sdk;
 
 namespace Wox.Plugin.SharedCommands
 {
@@ -50,7 +51,7 @@ namespace Wox.Plugin.SharedCommands
             ProcessThreadCollection ptc = Process.GetCurrentProcess().Threads;
             for (int i = 0; i < ptc.Count; i++)
             {
-                NativeMethods.EnumThreadWindows((uint)ptc[i].Id, CheckSecurityThread, IntPtr.Zero);
+                Pinvoke.EnumThreadWindows((uint)ptc[i].Id, CheckSecurityThread, IntPtr.Zero);
             }
         }
 
@@ -66,8 +67,8 @@ namespace Wox.Plugin.SharedCommands
 
         private static string GetWindowTitle(IntPtr hwnd)
         {
-            StringBuilder sb = new StringBuilder(NativeMethods.GetWindowTextLength(hwnd) + 1);
-            _ = NativeMethods.GetWindowText(hwnd, sb, sb.Capacity);
+            StringBuilder sb = new StringBuilder(PInvoke.GetWindowTextLength(hwnd) + 1);
+            _ = PInvoke.GetWindowText(hwnd, sb, sb.Capacity);
             return sb.ToString();
         }
 
