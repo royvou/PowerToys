@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO.Abstractions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,6 +24,8 @@ namespace Microsoft.Plugin.WindowWalker.Components
     /// </summary>
     public class Window
     {
+        private static readonly IFileSystem FileSystem = new FileSystem();
+
         /// <summary>
         /// Maximum size of a file name
         /// </summary>
@@ -32,7 +35,9 @@ namespace Microsoft.Plugin.WindowWalker.Components
         /// The list of owners of a window so that we don't have to
         /// constantly query for the process owning a specific window
         /// </summary>
-        private static readonly Dictionary<IntPtr, string> _handlesToProcessCache = new Dictionary<IntPtr, string>();
+        private static readonly Dictionary<IntPtr, string> _handlesToProcessNameCache = new Dictionary<IntPtr, string>();
+
+        private static readonly Dictionary<IntPtr, string> _handlesToProcessPathCache = new Dictionary<IntPtr, string>();
 
         /// <summary>
         /// The handle to the window
@@ -82,31 +87,29 @@ namespace Microsoft.Plugin.WindowWalker.Components
         {
             get
             {
-                lock (_handlesToProcessCache)
+                lock (_handlesToProcessNameCache)
                 {
-                    if (_handlesToProcessCache.Count > 7000)
+                    if (_handlesToProcessNameCache.Count > 7000)
                     {
-                        Debug.Print("Clearing Process Cache because it's size is " + _handlesToProcessCache.Count);
-                        _handlesToProcessCache.Clear();
+                        Debug.Print("Clearing Process Cache because it's size is " + _handlesToProcessNameCache.Count);
+                        _handlesToProcessNameCache.Clear();
                     }
 
-                    if (!_handlesToProcessCache.ContainsKey(Hwnd))
+                    if (!_handlesToProcessNameCache.ContainsKey(Hwnd))
                     {
                         var processName = GetProcessNameFromWindowHandle(Hwnd);
 
                         if (processName.Length != 0)
                         {
-                            _handlesToProcessCache.Add(
-                                Hwnd,
-                                processName.ToString().Split('\\').Reverse().ToArray()[0]);
+                            _handlesToProcessNameCache[Hwnd] = processName;
                         }
                         else
                         {
-                            _handlesToProcessCache.Add(Hwnd, string.Empty);
+                            _handlesToProcessNameCache[Hwnd] = string.Empty;
                         }
                     }
 
-                    if (_handlesToProcessCache[hwnd].ToUpperInvariant() == "APPLICATIONFRAMEHOST.EXE")
+                    if (_handlesToProcessNameCache[hwnd].ToUpperInvariant() == "APPLICATIONFRAMEHOST.EXE")
                     {
                         new Task(() =>
                         {
@@ -115,7 +118,7 @@ namespace Microsoft.Plugin.WindowWalker.Components
                                 var childProcessId = GetProcessIDFromWindowHandle(hwnd);
                                 if (childProcessId != ProcessID)
                                 {
-                                    _handlesToProcessCache[Hwnd] = GetProcessNameFromWindowHandle(hwnd);
+                                    _handlesToProcessNameCache[Hwnd] = GetProcessNameFromWindowHandle(hwnd);
                                     return false;
                                 }
                                 else
@@ -127,7 +130,61 @@ namespace Microsoft.Plugin.WindowWalker.Components
                         }).Start();
                     }
 
-                    return _handlesToProcessCache[hwnd];
+                    return _handlesToProcessNameCache[hwnd];
+                }
+            }
+        }
+
+        public string ProcessPath
+        {
+            get
+            {
+                lock (_handlesToProcessPathCache)
+                {
+                    if (_handlesToProcessPathCache.Count > 7000)
+                    {
+                        Debug.Print("Clearing Process Cache because it's size is " + _handlesToProcessPathCache.Count);
+                        _handlesToProcessPathCache.Clear();
+                    }
+
+                    if (!_handlesToProcessPathCache.TryGetValue(hwnd, out var processPath))
+                    {
+                        processPath = GetProcessPathFromWindowHandle(Hwnd);
+
+                        if (processPath.Length != 0)
+                        {
+                            _handlesToProcessPathCache.Add(Hwnd, processPath);
+                        }
+                        else
+                        {
+                            _handlesToProcessPathCache.Add(Hwnd, string.Empty);
+                        }
+                    }
+
+                    if (processPath.EndsWith("APPLICATIONFRAMEHOST.EXE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        new Task(() =>
+                        {
+                            NativeMethods.CallBackPtr callbackptr = new NativeMethods.CallBackPtr((IntPtr hwnd, IntPtr lParam) =>
+                            {
+                                var childProcessId = GetProcessIDFromWindowHandle(hwnd);
+                                if (childProcessId != ProcessID)
+                                {
+                                    processPath = GetProcessPathFromWindowHandle(hwnd);
+                                    _handlesToProcessPathCache[Hwnd] = processPath;
+
+                                    return false;
+                                }
+                                else
+                                {
+                                    return true;
+                                }
+                            });
+                            _ = NativeMethods.EnumChildWindows(Hwnd, callbackptr, 0);
+                        }).Start();
+                    }
+
+                    return processPath;
                 }
             }
         }
@@ -310,20 +367,29 @@ namespace Microsoft.Plugin.WindowWalker.Components
         }
 
         /// <summary>
-        /// Gets the name of the process using the window handle
+        /// Gets the name of the process using the window ha ndle
         /// </summary>
         /// <param name="hwnd">The handle to the window</param>
         /// <returns>A string representing the process name or an empty string if the function fails</returns>
         private string GetProcessNameFromWindowHandle(IntPtr hwnd)
         {
+            return FileSystem.Path.GetFileName(GetProcessPathFromWindowHandle(hwnd));
+        }
+
+        /// <summary>
+        /// Gets the path of the process using the window handle
+        /// <param name="hwnd">The handle to the window</param>
+        /// <returns>A string representing the process name or an empty string if the function fails</returns>
+        private string GetProcessPathFromWindowHandle(IntPtr hwnd)
+        {
             uint processId = GetProcessIDFromWindowHandle(hwnd);
             ProcessID = processId;
-            IntPtr processHandle = NativeMethods.OpenProcess(NativeMethods.ProcessAccessFlags.AllAccess, true, (int)processId);
+            IntPtr processHandle = NativeMethods.OpenProcess(NativeMethods.ProcessAccessFlags.QueryInformation, true, (int)processId);
             StringBuilder processName = new StringBuilder(MaximumFileNameLength);
-
-            if (NativeMethods.GetProcessImageFileName(processHandle, processName, MaximumFileNameLength) != 0)
+            int length = processName.Capacity;
+            if (NativeMethods.QueryFullProcessImageName(processHandle, 0, processName, ref length))
             {
-                return processName.ToString().Split('\\').Reverse().ToArray()[0];
+                return processName.ToString();
             }
             else
             {

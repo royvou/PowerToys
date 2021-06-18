@@ -42,7 +42,7 @@ namespace Microsoft.Plugin.WindowWalker
             return _results.Select(x => new Result()
             {
                 Title = x.Result.Title,
-                IcoPath = IconPath,
+                IcoPath = x.Result.ProcessPath ?? IconPath,
                 SubTitle = Properties.Resources.wox_plugin_windowwalker_running + ": " + x.Result.ProcessName,
                 Action = c =>
                 {
